@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { createLead, dashboard, deleteLead, listLeads, updateLead } from '../controllers/leadController.js';
+import { protect } from '../middleware/auth.js';
+import { leadRules } from '../utils/validators.js';
+const router = Router();
+router.use(protect);
+router.get('/dashboard', dashboard);
+router.route('/').get(listLeads).post(leadRules, createLead);
+router.route('/:id').put(leadRules, updateLead).delete(deleteLead);
+export default router;
