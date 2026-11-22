@@ -1,24 +1,320 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BarChart3, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Download, Filter, LayoutDashboard, LogOut, Plus, Search, SlidersHorizontal, Users, X, TrendingUp, Target } from 'lucide-react';
+import {
+  BarChart3,
+  ChevronLeft,
+  ChevronRight,
+  CircleHelp,
+  Download,
+  LayoutDashboard,
+  LogOut,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  Target,
+  TrendingUp,
+  Users,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import StatusBadge from '../components/StatusBadge';
 import LeadModal from '../components/LeadModal';
 
-const statuses = ['All statuses', 'New', 'Contacted', 'Qualified', 'Lost'];
-const fmtDate = value => new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+const statuses = ['New', 'Contacted', 'Qualified', 'Lost'];
+const sources = ['Website', 'Referral', 'Social Media', 'Cold Call', 'Advertisement', 'Other'];
+const fmtDate = value =>
+  new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
 export default function Dashboard() {
   const { user, logout } = useAuth();
-  const [leads, setLeads] = useState([]); const [stats, setStats] = useState({ total: 0, byStatus: { New: 0, Contacted: 0, Qualified: 0, Lost: 0 } });
+  const [leads, setLeads] = useState([]);
+  const [stats, setStats] = useState({ total: 0, byStatus: { New: 0, Contacted: 0, Qualified: 0, Lost: 0 } });
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
-  const [search, setSearch] = useState(''); const [status, setStatus] = useState(''); const [source, setSource] = useState(''); const [sortBy, setSortBy] = useState('createdAt'); const [order, setOrder] = useState('desc');
-  const [modal, setModal] = useState(false); const [editing, setEditing] = useState(null); const [loading, setLoading] = useState(true); const [error, setError] = useState(''); const [notice, setNotice] = useState('');
-  const load = useCallback(async (page = 1) => { setLoading(true); setError(''); try { const [l, d] = await Promise.all([api.get('/leads', { params: { page, limit: 8, search, status, source, sortBy, order } }), api.get('/leads/dashboard')]); setLeads(l.data.leads); setPagination(l.data.pagination); setStats(d.data); } catch (e) { setError(e.response?.data?.message || 'Could not load your leads. Check the API connection.'); } finally { setLoading(false); } }, [search, status, source, sortBy, order]);
-  useEffect(() => { const t = setTimeout(() => load(1), 280); return () => clearTimeout(t); }, [load]);
-  const saveLead = async data => { if (editing) await api.put(`/leads/${editing._id}`, data); else await api.post('/leads', data); setNotice(editing ? 'Lead updated successfully.' : 'Lead added successfully.'); setEditing(null); await load(1); };
-  const deleteLead = async lead => { if (!window.confirm(`Delete ${lead.name}? This action cannot be undone.`)) return; try { await api.delete(`/leads/${lead._id}`); setNotice('Lead deleted.'); await load(Math.min(pagination.page, Math.max(1, pagination.pages - (leads.length === 1 ? 1 : 0)))); } catch (e) { setError(e.response?.data?.message || 'Could not delete lead.'); } };
-  const openEdit = lead => { setEditing(lead); setModal(true); };
-  const exportCSV = () => { const rows = [['Name','Email','Phone','Company','Source','Status','Created'], ...leads.map(l => [l.name,l.email,l.phone,l.company,l.source,l.status,fmtDate(l.createdAt)])]; const csv = rows.map(r => r.map(v => `"${String(v ?? '').replaceAll('"','""')}"`).join(',')).join('\n'); const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = 'leadflow-leads.csv'; a.click(); URL.revokeObjectURL(url); };
-  const cards = [{ label: 'Total leads', value: stats.total, icon: Users, tone: 'bg-indigo-50 text-indigo-600', note: 'All captured prospects' }, { label: 'New leads', value: stats.byStatus.New, icon: TrendingUp, tone: 'bg-sky-50 text-sky-600', note: 'Ready for first contact' }, { label: 'Qualified', value: stats.byStatus.Qualified, icon: Target, tone: 'bg-emerald-50 text-emerald-600', note: 'High-intent opportunities' }, { label: 'Contacted', value: stats.byStatus.Contacted, icon: BarChart3, tone: 'bg-violet-50 text-violet-600', note: 'Conversations in progress' }];
-  return <div className="min-h-screen bg-[#f6f7fb]"><aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-slate-200/80 bg-white px-5 py-6 lg:flex"><a href="/" className="flex items-center gap-3 px-2 text-xl font-extrabold tracking-tight text-slate-900"><span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-600 text-white"><BarChart3 size={21}/></span>leadflow<span className="text-indigo-600">.</span></a><p className="mb-3 mt-12 px-3 text-[10px] font-bold uppercase tracking-[.2em] text-slate-400">Workspace</p><div className="flex items-center gap-3 rounded-xl bg-indigo-50 px-3 py-3 text-sm font-semibold text-indigo-700"><LayoutDashboard size={18}/>Overview</div><div className="mt-auto rounded-xl border border-slate-100 bg-slate-50 p-4"><div className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-700"><CircleHelp size={15}/> Need a hand?</div><p className="text-xs leading-5 text-slate-500">Keep your pipeline up to date. Small, consistent follow-ups make a difference.</p></div></aside><main className="lg:pl-64"><header className="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-slate-200/80 bg-white/90 px-5 backdrop-blur md:px-9"><div><p className="text-xs text-slate-400">Workspace / Overview</p><h1 className="text-lg font-bold text-slate-900">Lead overview</h1></div><div className="flex items-center gap-3"><div className="hidden text-right sm:block"><p className="text-sm font-semibold text-slate-800">{user?.name}</p><p className="text-xs text-slate-400">Workspace owner</p></div><div className="grid h-9 w-9 place-items-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">{user?.name?.slice(0,1).toUpperCase()}</div><button onClick={logout} title="Sign out" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><LogOut size={18}/></button></div></header><div className="mx-auto max-w-[1440px] p-5 md:p-9"><div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm font-medium text-indigo-600">Your sales pipeline</p><h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 md:text-[28px]">Good to see you, {user?.name?.split(' ')[0]} <span>👋</span></h2><p className="mt-1 text-sm text-slate-500">Here’s what’s happening with your leads today.</p></div><button onClick={() => { setEditing(null); setModal(true); }} className="btn-primary flex items-center justify-center gap-2"><Plus size={17}/> Add new lead</button></div>{notice && <div className="mb-4 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}<button onClick={() => setNotice('')}><X size={16}/></button></div>}{error && <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(({ label, value, icon: Icon, tone, note }) => <div key={label} className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-soft"><div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-500">{label}</span><span className={`grid h-10 w-10 place-items-center rounded-xl ${tone}`}><Icon size={19}/></span></div><p className="mt-4 text-3xl font-bold tracking-tight text-slate-900">{value}</p><p className="mt-1 text-xs text-slate-400">{note}</p></div>)}</div><section className="mt-8 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-soft"><div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 md:flex-row md:items-center md:px-6"><div><h3 className="font-bold text-slate-900">All leads <span className="ml-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">{pagination.total}</span></h3><p className="mt-1 text-xs text-slate-400">Manage and track your sales opportunities</p></div><button onClick={exportCSV} className="btn-secondary flex items-center justify-center gap-2"><Download size={15}/> Export current page</button></div><div className="flex flex-col gap-3 border-b border-slate-100 p-4 md:flex-row md:items-center md:px-6"><div className="relative flex-1"><Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input className="field pl-9" placeholder="Search name, email or company…" value={search} onChange={e => setSearch(e.target.value)}/></div><div className="grid grid-cols-2 gap-3 md:flex"><select className="field min-w-[145px]" value={status} onChange={e => setStatus(e.target.value)}><option value="">All statuses</option>{statuses.slice(1).map(s => <option key={s}>{s}</option>)}</select><select className="field min-w-[145px]" value={source} onChange={e => setSource(e.target.value)}><option value="">All sources</option>{['Website','Referral','Social Media','Cold Call','Advertisement','Other'].map(s => <option key={s}>{s}</option>)}</select></div><div className="flex items-center gap-2"><SlidersHorizontal size={15} className="text-slate-400"/><select className="field min-w-[145px]" value={`${sortBy}:${order}`} onChange={e => { const [s,o] = e.target.value.split(':'); setSortBy(s); setOrder(o); }}><option value="createdAt:desc">Newest first</option><option value="createdAt:asc">Oldest first</option><option value="name:asc">Name A–Z</option><option value="name:desc">Name Z–A</option><option value="status:asc">Status</option><option value="company:asc">Company A–Z</option></select></div></div><div className="overflow-x-auto"><table className="w-full min-w-[850px] text-left"><thead className="bg-slate-50/80"><tr className="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400"><th className="px-6 py-3">Lead</th><th className="px-4 py-3">Company</th><th className="px-4 py-3">Source</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Added</th><th className="px-6 py-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-slate-100">{loading ? <tr><td colSpan="6" className="py-16 text-center text-sm text-slate-400">Loading leads…</td></tr> : leads.length === 0 ? <tr><td colSpan="6" className="py-16 text-center"><div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-400"><Users size={22}/></div><p className="mt-3 text-sm font-semibold text-slate-700">No leads found</p><p className="mt-1 text-xs text-slate-400">Try adjusting your filters or add a new lead.</p></td></tr> : leads.map(lead => <tr key={lead._id} className="transition hover:bg-slate-50/70"><td className="px-6 py-4"><div className="flex items-center gap-3"><div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 text-xs font-bold text-indigo-700">{lead.name.split(' ').map(x => x[0]).slice(0,2).join('').toUpperCase()}</div><div><p className="text-sm font-semibold text-slate-800">{lead.name}</p><p className="mt-0.5 text-xs text-slate-400">{lead.email}</p></div></div></td><td className="px-4 py-4"><p className="text-sm font-medium text-slate-700">{lead.company}</p><p className="mt-0.5 text-xs text-slate-400">{lead.phone}</p></td><td className="px-4 py-4 text-sm text-slate-500">{lead.source}</td><td className="px-4 py-4"><StatusBadge status={lead.status}/></td><td className="px-4 py-4 text-sm text-slate-500">{fmtDate(lead.createdAt)}</td><td className="px-6 py-4"><div className="flex justify-end gap-1"><button onClick={() => openEdit(lead)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50">Edit</button><button onClick={() => deleteLead(lead)} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">Delete</button></div></td></tr>)}</tbody></table></div><div className="flex flex-col justify-between gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center md:px-6"><p className="text-xs text-slate-400">Showing <span className="font-semibold text-slate-600">{pagination.total ? (pagination.page - 1) * pagination.limit + 1 : 0}–{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of <span className="font-semibold text-slate-600">{pagination.total}</span> leads</p><div className="flex items-center justify-end gap-2"><button disabled={pagination.page <= 1 || loading} onClick={() => load(pagination.page - 1)} className="page-btn"><ChevronLeft size={16}/></button><span className="px-2 text-xs font-medium text-slate-500">Page {pagination.page} of {Math.max(1,pagination.pages)}</span><button disabled={pagination.page >= pagination.pages || loading} onClick={() => load(pagination.page + 1)} className="page-btn"><ChevronRight size={16}/></button></div></div></section><p className="mt-6 text-center text-xs text-slate-400">Leadflow · A little more clarity for every conversation.</p></div></main><LeadModal open={modal} lead={editing} onClose={() => { setModal(false); setEditing(null); }} onSave={saveLead}/></div>;
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
+  const [source, setSource] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [order, setOrder] = useState('desc');
+  const [modal, setModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+
+  const load = useCallback(async (page = 1) => {
+    setLoading(true);
+    setError('');
+    try {
+      const [leadResponse, dashboardResponse] = await Promise.all([
+        api.get('/leads', { params: { page, limit: 8, search, status, source, sortBy, order } }),
+        api.get('/leads/dashboard'),
+      ]);
+      setLeads(leadResponse.data.leads);
+      setPagination(leadResponse.data.pagination);
+      setStats(dashboardResponse.data);
+    } catch (e) {
+      setError(e.response?.data?.message || 'Could not load your leads. Check the API connection.');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, status, source, sortBy, order]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => load(1), 280);
+    return () => clearTimeout(timer);
+  }, [load]);
+
+  const saveLead = async data => {
+    if (editing) await api.put(`/leads/${editing._id}`, data);
+    else await api.post('/leads', data);
+    setNotice(editing ? 'Lead updated successfully.' : 'Lead added successfully.');
+    setEditing(null);
+    await load(1);
+  };
+
+  const deleteLead = async lead => {
+    if (!window.confirm(`Delete ${lead.name}? This action cannot be undone.`)) return;
+    try {
+      await api.delete(`/leads/${lead._id}`);
+      setNotice('Lead deleted.');
+      await load(Math.min(pagination.page, Math.max(1, pagination.pages - (leads.length === 1 ? 1 : 0))));
+    } catch (e) {
+      setError(e.response?.data?.message || 'Could not delete lead.');
+    }
+  };
+
+  const exportCSV = () => {
+    const rows = [
+      ['Name', 'Email', 'Phone', 'Company', 'Source', 'Status', 'Created'],
+      ...leads.map(lead => [
+        lead.name, lead.email, lead.phone, lead.company, lead.source, lead.status, fmtDate(lead.createdAt),
+      ]),
+    ];
+    const csv = rows
+      .map(row => row.map(value => `"${String(value ?? '').replaceAll('"', '""')}"`).join(','))
+      .join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'leadflow-leads.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const cards = [
+    { label: 'Total leads', value: stats.total, icon: Users, tone: 'total', note: 'All captured prospects' },
+    { label: 'New leads', value: stats.byStatus.New, icon: TrendingUp, tone: 'new', note: 'Ready for first contact' },
+    { label: 'Qualified', value: stats.byStatus.Qualified, icon: Target, tone: 'qualified', note: 'High-intent opportunities' },
+    { label: 'Contacted', value: stats.byStatus.Contacted, icon: BarChart3, tone: 'contacted', note: 'Conversations in progress' },
+  ];
+
+  return (
+    <div className="dashboard-shell">
+      <aside className="app-sidebar">
+        <a href="/" className="brand-lockup" aria-label="Leadflow home">
+          <span className="brand-mark"><BarChart3 size={21} strokeWidth={2.5} /></span>
+          <span>leadflow<span className="brand-period">.</span></span>
+        </a>
+        <p className="sidebar-label">Workspace</p>
+        <div className="sidebar-link"><LayoutDashboard size={18} /> Overview</div>
+        <div className="sidebar-help">
+          <div className="sidebar-help-title"><CircleHelp size={16} /> A little reminder</div>
+          <p>Good relationships are built one thoughtful follow-up at a time.</p>
+          <span className="help-spark">✳</span>
+        </div>
+        <div className="sidebar-foot">MADE FOR MOMENTUM <span>↗</span></div>
+      </aside>
+
+      <main className="dashboard-main">
+        <header className="topbar">
+          <a href="/" className="brand-lockup mobile-brand" aria-label="Leadflow home">
+            <span className="brand-mark"><BarChart3 size={19} strokeWidth={2.5} /></span>
+            <span>leadflow<span className="brand-period">.</span></span>
+          </a>
+          <div className="topbar-context">
+            <p>WORKSPACE <span>/</span> OVERVIEW</p>
+            <h1>Your pipeline</h1>
+          </div>
+          <div className="account-area">
+            <div className="account-copy">
+              <p>{user?.name}</p>
+              <span>Workspace owner</span>
+            </div>
+            <div className="account-avatar">{user?.name?.slice(0, 1).toUpperCase()}</div>
+            <button onClick={logout} title="Sign out" aria-label="Sign out" className="logout-button">
+              <LogOut size={18} />
+            </button>
+          </div>
+        </header>
+
+        <div className="page-content">
+          <section className="welcome-row">
+            <div>
+              <p className="eyebrow"><span className="eyebrow-dot" /> YOUR SALES, AT A GLANCE</p>
+              <h2>Good to see you, {user?.name?.split(' ')[0]}<span className="wave"> ✳</span></h2>
+              <p className="welcome-subtitle">A little more clarity for every conversation.</p>
+            </div>
+            <button
+              onClick={() => { setEditing(null); setModal(true); }}
+              className="btn-primary add-lead-button"
+            >
+              <Plus size={18} /> Add new lead
+            </button>
+          </section>
+
+          {notice && (
+            <div className="notice-banner">
+              <span>{notice}</span>
+              <button onClick={() => setNotice('')} aria-label="Dismiss notification"><X size={16} /></button>
+            </div>
+          )}
+          {error && <div className="error-banner">{error}</div>}
+
+          <section className="stats-grid" aria-label="Lead statistics">
+            {cards.map(({ label, value, icon: Icon, tone, note }, index) => (
+              <article key={label} className={`stat-card stat-card--${tone}`}>
+                <div className="stat-topline">
+                  <span>{label}</span>
+                  <span className="stat-icon"><Icon size={19} /></span>
+                </div>
+                <div className="stat-value">{value}</div>
+                <div className="stat-note">{note}</div>
+                <span className="stat-index">0{index + 1}</span>
+              </article>
+            ))}
+          </section>
+
+          <section className="leads-panel">
+            <div className="panel-heading">
+              <div>
+                <p className="panel-kicker">THE PEOPLE YOU’RE BUILDING WITH</p>
+                <h3>All leads <span className="lead-count">{pagination.total}</span></h3>
+                <p className="panel-description">Keep every opportunity moving forward.</p>
+              </div>
+              <button onClick={exportCSV} className="btn-secondary export-button">
+                <Download size={16} /> Export current page
+              </button>
+            </div>
+
+            <div className="filter-toolbar">
+              <div className="search-wrap">
+                <Search size={17} />
+                <input
+                  className="field search-field"
+                  placeholder="Search name, email or company…"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  aria-label="Search leads"
+                />
+              </div>
+              <div className="filter-selects">
+                <select className="field filter-field" value={status} onChange={e => setStatus(e.target.value)} aria-label="Filter by status">
+                  <option value="">All statuses</option>
+                  {statuses.map(value => <option key={value}>{value}</option>)}
+                </select>
+                <select className="field filter-field" value={source} onChange={e => setSource(e.target.value)} aria-label="Filter by source">
+                  <option value="">All sources</option>
+                  {sources.map(value => <option key={value}>{value}</option>)}
+                </select>
+              </div>
+              <div className="sort-wrap">
+                <SlidersHorizontal size={16} />
+                <select
+                  className="field filter-field sort-field"
+                  value={`${sortBy}:${order}`}
+                  onChange={e => {
+                    const [nextSort, nextOrder] = e.target.value.split(':');
+                    setSortBy(nextSort);
+                    setOrder(nextOrder);
+                  }}
+                  aria-label="Sort leads"
+                >
+                  <option value="createdAt:desc">Newest first</option>
+                  <option value="createdAt:asc">Oldest first</option>
+                  <option value="name:asc">Name A–Z</option>
+                  <option value="name:desc">Name Z–A</option>
+                  <option value="status:asc">Status</option>
+                  <option value="company:asc">Company A–Z</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="table-scroll">
+              <table className="leads-table">
+                <thead>
+                  <tr><th>Lead</th><th>Company</th><th>Source</th><th>Status</th><th>Added</th><th className="actions-heading">Actions</th></tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan="6" className="table-message">Loading your leads…</td></tr>
+                  ) : leads.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="table-message empty-state">
+                        <span className="empty-icon"><Users size={22} /></span>
+                        <strong>No leads found</strong>
+                        <span>Try adjusting your filters or add a new lead.</span>
+                      </td>
+                    </tr>
+                  ) : leads.map(lead => (
+                    <tr key={lead._id}>
+                      <td>
+                        <div className="lead-identity">
+                          <div className="lead-avatar">
+                            {lead.name.split(' ').map(part => part[0]).slice(0, 2).join('').toUpperCase()}
+                          </div>
+                          <div className="lead-copy">
+                            <strong>{lead.name}</strong>
+                            <span>{lead.email}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td><div className="company-copy"><strong>{lead.company}</strong><span>{lead.phone}</span></div></td>
+                      <td className="source-cell">{lead.source}</td>
+                      <td><StatusBadge status={lead.status} /></td>
+                      <td className="date-cell">{fmtDate(lead.createdAt)}</td>
+                      <td>
+                        <div className="row-actions">
+                          <button onClick={() => { setEditing(lead); setModal(true); }}>Edit</button>
+                          <button onClick={() => deleteLead(lead)} className="delete-action">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="pagination-bar">
+              <p>
+                Showing <strong>{pagination.total ? (pagination.page - 1) * pagination.limit + 1 : 0}–{Math.min(pagination.page * pagination.limit, pagination.total)}</strong>
+                {' '}of <strong>{pagination.total}</strong> leads
+              </p>
+              <div className="pagination-controls">
+                <button
+                  disabled={pagination.page <= 1 || loading}
+                  onClick={() => load(pagination.page - 1)}
+                  className="page-btn"
+                  aria-label="Previous page"
+                ><ChevronLeft size={17} /></button>
+                <span>Page <strong>{pagination.page}</strong> of {Math.max(1, pagination.pages)}</span>
+                <button
+                  disabled={pagination.page >= pagination.pages || loading}
+                  onClick={() => load(pagination.page + 1)}
+                  className="page-btn"
+                  aria-label="Next page"
+                ><ChevronRight size={17} /></button>
+              </div>
+            </div>
+          </section>
+          <footer className="page-footer">LEADFLOW <span>·</span> A LITTLE MORE CLARITY FOR EVERY CONVERSATION.</footer>
+        </div>
+      </main>
+      <LeadModal
+        open={modal}
+        lead={editing}
+        onClose={() => { setModal(false); setEditing(null); }}
+        onSave={saveLead}
+      />
+    </div>
+  );
 }

@@ -1,11 +1,149 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { ArrowRight, BarChart3, CheckCircle2, ShieldCheck, Users } from 'lucide-react';
+import { Activity, ArrowRight, BarChart3, CheckCircle2, LockKeyhole } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
 export default function AuthPage({ mode }) {
-  const signup = mode === 'signup'; const { user, login, signup: register } = useAuth(); const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '' }); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
-  if (user) return <Navigate to="/" replace/>;
-  const submit = async e => { e.preventDefault(); setError(''); setBusy(true); try { await (signup ? register(form) : login({ email: form.email, password: form.password })); navigate('/'); } catch (err) { setError(err.response?.data?.message || 'Something went wrong. Please try again.'); } finally { setBusy(false); } };
-  return <div className="min-h-screen bg-white lg:grid lg:grid-cols-[1.05fr_.95fr]"><section className="relative hidden overflow-hidden bg-[#111b31] px-12 py-14 text-white lg:flex lg:flex-col lg:justify-between xl:px-20"><div className="absolute -right-36 -top-24 h-96 w-96 rounded-full border border-white/10"/><div className="absolute -right-16 top-16 h-64 w-64 rounded-full border border-white/10"/><Link to="/login" className="relative flex items-center gap-3 text-xl font-bold"><span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-500"><BarChart3 size={22}/></span>leadflow<span className="text-indigo-300">.</span></Link><div className="relative max-w-xl"><p className="mb-5 text-xs font-bold uppercase tracking-[.22em] text-indigo-300">A clearer view of every opportunity</p><h1 className="text-5xl font-bold leading-[1.12] tracking-tight">Build better relationships. <span className="text-indigo-300">Close more deals.</span></h1><p className="mt-6 max-w-md text-lg leading-8 text-slate-300">One focused workspace to organize your pipeline, keep conversations moving, and turn prospects into customers.</p><div className="mt-10 space-y-4">{[[Users,'Every lead in one place'],[BarChart3,'Pipeline insights at a glance'],[ShieldCheck,'Private, secure workspaces']].map(([Icon, t]) => <div key={t} className="flex items-center gap-3 text-sm text-slate-200"><span className="grid h-9 w-9 place-items-center rounded-lg bg-white/10"><Icon size={17}/></span>{t}</div>)}</div></div><p className="relative text-xs text-slate-500">© 2026 Leadflow. Built for teams that follow through.</p></section><section className="flex min-h-screen items-center justify-center px-6 py-12"><div className="w-full max-w-md"><Link to="/login" className="mb-12 flex items-center gap-2 text-lg font-bold text-slate-900 lg:hidden"><span className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-600 text-white"><BarChart3 size={19}/></span>leadflow<span className="text-indigo-600">.</span></Link><div className="mb-8"><p className="text-xs font-bold uppercase tracking-[.18em] text-indigo-600">{signup ? 'Get started' : 'Welcome back'}</p><h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{signup ? 'Create your account' : 'Sign in to Leadflow'}</h2><p className="mt-2 text-sm text-slate-500">{signup ? 'Set up your workspace and start managing leads.' : 'Enter your details to access your workspace.'}</p></div><form onSubmit={submit} className="space-y-5">{signup && <label className="block"><span className="label">Full name</span><input className="field" placeholder="Your name" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}/></label>}<label className="block"><span className="label">Email address</span><input className="field" type="email" placeholder="you@company.com" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}/></label><label className="block"><span className="label">Password</span><input className="field" type="password" minLength="8" placeholder="At least 8 characters" required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}/></label>{error && <p className="rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}<button disabled={busy} className="btn-primary flex w-full items-center justify-center gap-2 py-3">{busy ? 'Please wait…' : signup ? 'Create account' : 'Sign in'} {!busy && <ArrowRight size={17}/>}</button></form><p className="mt-7 text-center text-sm text-slate-500">{signup ? 'Already have an account?' : "Don't have an account?"} <Link className="font-semibold text-indigo-600 hover:text-indigo-700" to={signup ? '/login' : '/signup'}>{signup ? 'Sign in' : 'Create an account'}</Link></p><div className="mt-10 flex items-center justify-center gap-2 text-xs text-slate-400"><CheckCircle2 size={14}/> Your workspace is private to your account</div></div></section></div>;
+  const signup = mode === 'signup';
+  const { user, login, signup: register } = useAuth();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  if (user) return <Navigate to="/" replace />;
+
+  const submit = async event => {
+    event.preventDefault();
+    setError('');
+    setBusy(true);
+    try {
+      await (signup ? register(form) : login({ email: form.email, password: form.password }));
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <main className="auth-shell">
+      <section className="auth-story">
+        <div className="auth-orbit auth-orbit--one" />
+        <div className="auth-orbit auth-orbit--two" />
+        <div className="auth-orbit auth-orbit--three" />
+        <Link to="/login" className="auth-brand">
+          <span className="brand-mark"><BarChart3 size={21} strokeWidth={2.5} /></span>
+          <span>leadflow<span className="brand-period">.</span></span>
+        </Link>
+        <div className="story-content">
+          <p className="story-eyebrow"><span /> A CALMER WAY TO KEEP BUSINESS MOVING</p>
+          <h1>Good leads deserve <em>good follow-through.</em></h1>
+          <p className="story-description">
+            Your whole pipeline, minus the busywork. Pick up the right conversation right where you left it.
+          </p>
+          <div className="pipeline-preview" aria-label="Illustration of the Leadflow dashboard">
+            <div className="preview-topbar">
+              <span className="preview-dots"><i /><i /><i /></span>
+              <span className="preview-title">YOUR PIPELINE <b>/</b> OVERVIEW</span>
+              <span className="preview-live"><i /> LIVE</span>
+            </div>
+            <div className="preview-content">
+              <div className="preview-summary">
+                <div>
+                  <span className="preview-label">OPPORTUNITY FLOW</span>
+                  <strong>Keep the momentum.</strong>
+                </div>
+                <span className="preview-trend"><Activity size={14} /> Growing</span>
+              </div>
+              <div className="preview-chart" aria-hidden="true">
+                {[28, 42, 34, 57, 48, 73, 62, 88, 68, 96, 78, 100].map((height, index) => (
+                  <span key={index} style={{ height: `${height}%` }} />
+                ))}
+              </div>
+              <div className="preview-stages">
+                <div><i className="stage-dot stage-dot--new" /><span>New</span><strong>01</strong></div>
+                <div><i className="stage-dot stage-dot--contacted" /><span>In conversation</span><strong>02</strong></div>
+                <div><i className="stage-dot stage-dot--qualified" /><span>Qualified</span><strong>03</strong></div>
+              </div>
+            </div>
+          </div>
+          <div className="story-note"><span>✳</span> BUILT FOR THE FOLLOW-THROUGH</div>
+        </div>
+        <p className="story-footer">© 2026 Leadflow. A little more clarity for every conversation.</p>
+      </section>
+
+      <section className="auth-form-side">
+        <Link to="/login" className="auth-brand auth-brand--mobile">
+          <span className="brand-mark"><BarChart3 size={19} strokeWidth={2.5} /></span>
+          <span>leadflow<span className="brand-period">.</span></span>
+        </Link>
+        <div className="auth-card">
+          <div className="auth-card-topline">
+            <span className="auth-card-icon"><LockKeyhole size={17} /></span>
+            <span><strong>PRIVATE WORKSPACE</strong><small>Secure access to your leads</small></span>
+          </div>
+          <div className="auth-heading">
+            <p className="auth-eyebrow">{signup ? 'START YOUR WORKSPACE' : 'PICK UP WHERE YOU LEFT OFF'}</p>
+            <h2>{signup ? 'Let’s get started.' : 'Welcome back.'}</h2>
+            <p>{signup ? 'Create your account and bring your pipeline into focus.' : 'Your next good conversation is just around the corner.'}</p>
+          </div>
+
+          <form onSubmit={submit} className="auth-form">
+            {signup && (
+              <label className="block">
+                <span className="label">Full name</span>
+                <input
+                  className="field"
+                  placeholder="Your name"
+                  autoComplete="name"
+                  required
+                  value={form.name}
+                  onChange={event => setForm({ ...form, name: event.target.value })}
+                />
+              </label>
+            )}
+            <label className="block">
+              <span className="label">Email address</span>
+              <input
+                className="field"
+                type="email"
+                placeholder="you@company.com"
+                autoComplete="email"
+                required
+                value={form.email}
+                onChange={event => setForm({ ...form, email: event.target.value })}
+              />
+            </label>
+            <label className="block">
+              <span className="label">Password</span>
+              <input
+                className="field"
+                type="password"
+                minLength="8"
+                placeholder="At least 8 characters"
+                autoComplete={signup ? 'new-password' : 'current-password'}
+                required
+                value={form.password}
+                onChange={event => setForm({ ...form, password: event.target.value })}
+              />
+            </label>
+            {error && <p className="auth-error" role="alert">{error}</p>}
+            <button disabled={busy} className="btn-primary auth-submit">
+              <span>{busy ? 'Please wait…' : signup ? 'Create account' : 'Sign in'}</span>
+              {!busy && <ArrowRight size={18} />}
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            {signup ? 'Already have an account?' : 'New to Leadflow?'}
+            {' '}<Link to={signup ? '/login' : '/signup'}>{signup ? 'Sign in' : 'Create an account'}</Link>
+          </p>
+          <div className="auth-private"><CheckCircle2 size={15} /> Private to you. Ready when you are.</div>
+        </div>
+        <p className="auth-bottom-note">A LITTLE MORE CLARITY FOR EVERY CONVERSATION.</p>
+      </section>
+    </main>
+  );
 }
